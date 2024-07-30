@@ -1,11 +1,15 @@
 import { render } from "./render";
 import {
   antvlayout as antvlayoutDagre,
-  antvlayoutWASM as antvlayoutWASMDagre,
+  // antvlayoutWASM as antvlayoutWASMDagre,
 } from "./dagre";
 import { loadDatasets } from "../datasets";
-import { CommonDagreLayoutOptions, CommonLayoutOptions, TestName } from "../types";
-import { initThreads } from "../../packages/layout-wasm";
+import {
+  CommonDagreLayoutOptions,
+  CommonLayoutOptions,
+  TestName,
+} from "../types";
+// import { initThreads } from "../../packages/layout-wasm";
 
 /**
  * We compare graphology, @antv/layout and its WASM versions.
@@ -50,13 +54,12 @@ const $checkboxes = TestsConfig.map(({ name }, i) => {
 });
 const $scaling = document.getElementById("scaling") as HTMLInputElement;
 
-const initThreadsPool = async () => {
-  const singleThread = await initThreads(false);
-  const multiThreads = await initThreads(true);
+// const initThreadsPool = async () => {
+//   const singleThread = await initThreads(false);
+//   const multiThreads = await initThreads(true);
 
-  return [singleThread, multiThreads];
-};
-
+//   return [singleThread, multiThreads];
+// };
 
 const doLayout = async (
   context: CanvasRenderingContext2D,
@@ -74,7 +77,7 @@ const doLayout = async (
 };
 
 (async () => {
-  $run.innerHTML = 'Loading...';
+  $run.innerHTML = "Loading...";
   $run.disabled = true;
   console.time("Load datasets");
   const datasets = await loadDatasets();
@@ -84,9 +87,9 @@ const doLayout = async (
   console.timeEnd("Load datasets");
 
   console.time("Init WASM threads");
-  const [forceSingleThread, forceMultiThreads] = await initThreadsPool();
+  // const [forceSingleThread, forceMultiThreads] = await initThreadsPool();
   console.timeEnd("Init WASM threads");
-  $run.innerHTML = 'Run layouts';
+  $run.innerHTML = "Run layouts";
   $run.disabled = false;
 
   const layoutConfig: any = [
@@ -96,12 +99,12 @@ const doLayout = async (
         dagre: antvlayoutDagre,
       },
     },
-    {
-      name: TestName.ANTV_LAYOUT_WASM_SINGLETHREAD,
-      methods: {
-        dagre: antvlayoutWASMDagre,
-      },
-    },
+    // {
+    //   name: TestName.ANTV_LAYOUT_WASM_SINGLETHREAD,
+    //   methods: {
+    //     dagre: antvlayoutWASMDagre,
+    //   },
+    // },
     // {
     //   name: TestName.ANTV_LAYOUT_WASM_MULTITHREADS,
     //   methods: {
@@ -130,9 +133,10 @@ const doLayout = async (
               ranksep: $ranksep.valueAsNumber,
               nodesep: $nodesep.valueAsNumber,
             },
-            name === TestName.ANTV_LAYOUT_WASM_MULTITHREADS
-              ? forceMultiThreads
-              : forceSingleThread,
+            // name === TestName.ANTV_LAYOUT_WASM_MULTITHREADS
+            //   ? forceMultiThreads
+            //   : forceSingleThread,
+            "",
             Number($scaling.value)
           );
         } else {

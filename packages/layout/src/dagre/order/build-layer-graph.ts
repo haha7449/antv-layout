@@ -1,5 +1,5 @@
-import { Graph, ID } from '@antv/graphlib';
-import { EdgeData, Graph as IGraph, NodeData } from '../../types';
+import { Graph, ID } from "@antv/graphlib";
+import { EdgeData, Graph as IGraph, NodeData } from "../../types";
 
 /*
  * Constructs a graph that can be used to sort a layer of nodes. The graph will
@@ -31,10 +31,14 @@ import { EdgeData, Graph as IGraph, NodeData } from '../../types';
  *    5. The weights for copied edges are aggregated as need, since the output
  *       graph is not a multi-graph.
  */
+/**
+ * 生成的两层图一定是一个有多个根节点的树结构
+ * 后续思路都是基于树
+ */
 export const buildLayerGraph = (
   g: IGraph,
   rank: number,
-  direction: 'in' | 'out'
+  direction: "in" | "out"
 ) => {
   const root = createRootNode(g);
   const result = new Graph<NodeData, EdgeData>({
@@ -48,20 +52,26 @@ export const buildLayerGraph = (
   });
 
   g.getAllNodes().forEach((v) => {
+    // 刚刚搜了下，似乎只有分层算法中network-simplex这个设置了parent，其他都没有设置
     const parent = g.getParent(v.id);
 
+    // 对层级为rank的节点进行遍历生成layermap
     if (
       v.data.rank === rank ||
+      // 这是未开发的功能？？没看到设置 minRank 和 maxRank 的地方
+      // 节点可能是子图，minRank和maxRank是子图的左右边界
       (v.data.minRank! <= rank && rank <= v.data.maxRank!)
     ) {
       if (!result.hasNode(v.id)) {
         result.addNode({ ...v });
       }
 
+      // 设置parent，后续可能会用到
       if (parent?.id && !result.hasNode(parent?.id)) {
         result.addNode({ ...parent });
       }
 
+      // 设置parent或者虚拟root
       result.setParent(v.id, parent?.id || root);
 
       // This assumes we have only short edges!
@@ -71,9 +81,12 @@ export const buildLayerGraph = (
           result.addNode({ ...g.getNode(u) });
         }
 
+        // 为什么是u的出边？？
+        // 实际上处理时，没有区别是否有向，统一按照无向边处理
         const edge = result
-          .getRelatedEdges(u, 'out')
+          .getRelatedEdges(u, "out")
           .find(({ target }) => target === v.id);
+        // 权重？？？
         const weight = edge !== undefined ? edge.data.weight! : 0;
 
         if (!edge) {
@@ -82,10 +95,13 @@ export const buildLayerGraph = (
             source: u,
             target: v.id,
             data: {
-              weight: e.data.weight! + weight,
+              weight: e.data.weight! + weight, // 此时weight必然为0，所以写不写无所谓
             },
           });
-        } else {
+        }
+        // 为什么会有这种情况，那这不是同一条边吗？？？
+        // 应该是给出的数据中，可能会重复给出一条边，所以这里的处理就是把重复的边合并
+        else {
           result.updateEdgeData(edge.id, {
             ...edge.data,
             weight: e.data.weight! + weight,
@@ -95,7 +111,8 @@ export const buildLayerGraph = (
 
       // console.log(v);
 
-      if (v.data.hasOwnProperty('minRank')) {
+      // 说明是子图
+      if (v.data.hasOwnProperty("minRank")) {
         result.updateNodeData(v.id, {
           ...v.data,
           borderLeft: (v.data.borderLeft as ID[])[rank],
@@ -110,6 +127,7 @@ export const buildLayerGraph = (
 
 const createRootNode = (g: IGraph) => {
   let v;
+  // 生成唯一id的节点
   while (g.hasNode((v = `_root${Math.random()}`)));
   return v;
 };

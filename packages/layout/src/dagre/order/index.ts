@@ -27,16 +27,18 @@ export const order = (g: IGraph, keepNodeOrder?: boolean) => {
   const mxRank = maxRank(g);
   const range1 = [];
   const range2 = [];
-  for (let i = 1; i < mxRank + 1; i++) range1.push(i);
-  for (let i = mxRank - 1; i > -1; i--) range2.push(i);
+  for (let i = 1; i < mxRank + 1; i++) range1.push(i); // [1, mxRank]
+  for (let i = mxRank - 1; i > -1; i--) range2.push(i); // [0, mxRank - 1]
   const downLayerGraphs = buildLayerGraphs(g, range1, "in");
   const upLayerGraphs = buildLayerGraphs(g, range2, "out");
 
-  let layering = initOrder(g);
+  // 初始化order
+  let layering = initOrder(g); // layering中数组的索引表示节点的order
   assignOrder(g, layering);
 
   let bestCC = Number.POSITIVE_INFINITY;
   let best: string[][];
+  // 为什么是4遍？？可能有什么科学证明
   for (let i = 0, lastBest = 0; lastBest < 4; ++i, ++lastBest) {
     sweepLayerGraphs(
       i % 2 ? downLayerGraphs : upLayerGraphs,
@@ -45,15 +47,16 @@ export const order = (g: IGraph, keepNodeOrder?: boolean) => {
       keepNodeOrder
     );
 
-    layering = buildLayerMatrix(g);
-    const cc = crossCount(g, layering);
+    layering = buildLayerMatrix(g); // 按照order升序计算新的节点顺序
+    const cc = crossCount(g, layering); // 交叉边个数
     if (cc < bestCC) {
-      lastBest = 0;
+      lastBest = 0; // 一旦是最佳的排序，验证4次排序中是否还是最优结果
       best = clone(layering);
       bestCC = cc;
     }
   }
 
+  // g6新增特点：考虑之前的节点order
   // consider use previous result, maybe somewhat reduendant
   layering = initOrder(g);
   assignOrder(g, layering);
@@ -61,7 +64,7 @@ export const order = (g: IGraph, keepNodeOrder?: boolean) => {
     sweepLayerGraphs(
       i % 2 ? downLayerGraphs : upLayerGraphs,
       i % 4 >= 2,
-      true,
+      true, // 只有这里，其他参数和步骤和之前一样。。。。
       keepNodeOrder
     );
 

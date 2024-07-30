@@ -49,6 +49,7 @@ const resolveConflicts = (
   cg: Graph
 ) => {
   const mappedEntries: Record<string, ConflictEntry> = {};
+  // 初始化 mappedEntries
   entries?.forEach((entry, i: number) => {
     mappedEntries[entry.v] = {
       i,
@@ -58,6 +59,7 @@ const resolveConflicts = (
       vs: [entry.v],
     };
     const tmp = mappedEntries[entry.v];
+    // entry没有入边时，barycenter为undefined
     if (entry.barycenter !== undefined) {
       tmp.barycenter = entry.barycenter;
       tmp.weight = entry.weight;
@@ -73,6 +75,7 @@ const resolveConflicts = (
     }
   });
 
+  // 从当前入度为0的点开始
   const sourceSet = Object.values(mappedEntries).filter?.(
     (entry: ConflictEntry) => !entry.indegree
   );
@@ -105,6 +108,7 @@ const doResolveConflicts = (sourceSet: ConflictEntry[]) => {
     };
   };
 
+  // sourceSet在不断handleIn和handleOut中会变化
   while (sourceSet?.length) {
     const entry = sourceSet.pop()!;
     entries.push(entry);
